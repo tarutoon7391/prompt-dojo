@@ -168,6 +168,7 @@ main { padding-bottom: calc(var(--nav-height) + 16px); }
 .tmpl-copy-btn{background:none;border:1px solid #2a4a2a;color:#4a9a4a;font-family:'JetBrains Mono',monospace;font-size:0.6rem;padding:0.25rem 0.65rem;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s;}
 .tmpl-copy-btn:hover{border-color:var(--green);color:var(--green);}
 .tmpl-copy-btn.ok{color:var(--yellow);border-color:var(--yellow);}
+.tw-cursor{display:inline-block;width:0.6em;height:0.85em;background:var(--green);vertical-align:bottom;margin-left:1px;animation:blink 1s step-end infinite;}
 </style>
 </head>
 <body>
@@ -187,7 +188,7 @@ main { padding-bottom: calc(var(--nav-height) + 16px); }
   <div id="lesson-list-view">
     <div class="hero">
       <div class="hero-label">// TRAINING MODE ACTIVATED</div>
-      <h1>GIGOを<em>超えろ。</em><br>プロンプトを<em>武器</em>にしろ。</h1>
+      <h1 id="hero-title" aria-label="GIGOを超えろ。プロンプトを武器にしろ。"></h1>
       <p>ダメなプロンプトからはダメなものしか生まれない。構造・役割・制約・出力形式を体に叩き込んで、AIから最大の出力を引き出せ。</p>
     </div>
     <div id="lesson-list"></div>
@@ -405,9 +406,77 @@ function showPage(id, btn) {
   if(id==='lessons') backToList();
 }
 
+function startTypewriter() {
+  var el = document.getElementById('hero-title');
+  if (!el) return;
+  var parts = [
+    {t:'GIGOを',em:false},
+    {t:'超えろ。',em:true},
+    {br:true},
+    {t:'プロンプトを',em:false},
+    {t:'武器',em:true},
+    {t:'にしろ。',em:false}
+  ];
+  var chars = [];
+  parts.forEach(function(p) {
+    if (p.br) { chars.push({br:true}); return; }
+    Array.from(p.t).forEach(function(c) { chars.push({c:c,em:p.em}); });
+  });
+  var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function appendCursor() {
+    var cur = document.createElement('span');
+    cur.className = 'tw-cursor';
+    el.appendChild(cur);
+  }
+  if (prefersReduced) {
+    parts.forEach(function(p) {
+      if (p.br) { el.appendChild(document.createElement('br')); return; }
+      if (p.em) {
+        var emEl = document.createElement('em');
+        emEl.textContent = p.t;
+        el.appendChild(emEl);
+      } else {
+        el.appendChild(document.createTextNode(p.t));
+      }
+    });
+    appendCursor();
+    return;
+  }
+  el.innerHTML = '';
+  var idx = 0;
+  function type() {
+    if (idx >= chars.length) {
+      appendCursor();
+      return;
+    }
+    var ch = chars[idx++];
+    var tail = el.lastChild;
+    if (ch.br) {
+      el.appendChild(document.createElement('br'));
+    } else if (ch.em) {
+      if (tail && tail.tagName === 'EM') {
+        tail.textContent += ch.c;
+      } else {
+        var emEl = document.createElement('em');
+        emEl.textContent = ch.c;
+        el.appendChild(emEl);
+      }
+    } else {
+      if (tail && tail.nodeType === 3) {
+        tail.nodeValue += ch.c;
+      } else {
+        el.appendChild(document.createTextNode(ch.c));
+      }
+    }
+    setTimeout(type, 80);
+  }
+  type();
+}
+
 renderLessons();
 initQuiz();
 renderTemplates();
+startTypewriter();
 </script>
 </body>
 </html>
