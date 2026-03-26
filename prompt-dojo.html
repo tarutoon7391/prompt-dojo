@@ -17,6 +17,7 @@
   --muted: #555;
   --border: #222;
   --card: #141414;
+  --nav-height: 56px;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -51,12 +52,13 @@ header {
 @keyframes blink { 50%{opacity:0;} }
 .status-bar { font-size: 0.6rem; color: var(--muted); display:flex; gap:1rem; }
 .status-bar span { color: var(--green); }
-nav { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; background:var(--bg); }
-.nav-btn { background:none; border:none; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.68rem; padding:0.9rem 1.2rem; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all 0.15s; letter-spacing:0.1em; text-transform:uppercase; }
+nav { display:flex; border-top:1px solid var(--border); overflow-x:auto; background:var(--bg2); position:fixed; bottom:0; left:0; right:0; z-index:100; }
+.nav-btn { background:none; border:none; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.68rem; padding:1rem 0.8rem; cursor:pointer; border-top:2px solid transparent; white-space:nowrap; transition:all 0.15s; letter-spacing:0.1em; text-transform:uppercase; flex:1; min-height:var(--nav-height); }
 .nav-btn::before { content:'> '; color:var(--border); }
-.nav-btn.active { color:var(--green); border-bottom-color:var(--green); }
+.nav-btn.active { color:var(--green); border-top-color:var(--green); }
 .nav-btn.active::before { color:var(--green); }
 .nav-btn:hover:not(.active) { color:var(--white); }
+main { padding-bottom: calc(var(--nav-height) + 16px); }
 .page { display:none; }
 .page.active { display:block; }
 .hero { padding:2.5rem 1.5rem 2rem; border-bottom:1px solid var(--border); position:relative; overflow:hidden; }
