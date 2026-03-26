@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROMPT DOJO // プロンプト道場</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --bg2: #111;
+  --green: #00ff88;
+  --yellow: #ffe600;
+  --red: #ff3366;
+  --blue: #00cfff;
+  --white: #e8e8e8;
+  --muted: #555;
+  --border: #222;
+  --card: #141414;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events:none;
+  z-index:1000;
+}
+header {
+  border-bottom: 1px solid var(--green);
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo { font-family: 'Press Start 2P', monospace; font-size: clamp(0.65rem, 2.5vw, 1rem); color: var(--green); text-shadow: 0 0 10px rgba(0,255,136,0.5); }
+.logo span { color: var(--yellow); }
+.blink { display:inline-block; width:10px; height:1em; background:var(--green); vertical-align:bottom; animation: blink 1s step-end infinite; }
+@keyframes blink { 50%{opacity:0;} }
+.status-bar { font-size: 0.6rem; color: var(--muted); display:flex; gap:1rem; }
+.status-bar span { color: var(--green); }
+nav { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; background:var(--bg); }
+.nav-btn { background:none; border:none; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.68rem; padding:0.9rem 1.2rem; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all 0.15s; letter-spacing:0.1em; text-transform:uppercase; }
+.nav-btn::before { content:'> '; color:var(--border); }
+.nav-btn.active { color:var(--green); border-bottom-color:var(--green); }
+.nav-btn.active::before { color:var(--green); }
+.nav-btn:hover:not(.active) { color:var(--white); }
+.page { display:none; }
+.page.active { display:block; }
+.hero { padding:2.5rem 1.5rem 2rem; border-bottom:1px solid var(--border); position:relative; overflow:hidden; }
+.hero::after { content:'GIGO'; position:absolute; right:-1rem; top:50%; transform:translateY(-50%); font-family:'Press Start 2P',monospace; font-size:clamp(3rem,12vw,8rem); color:rgba(0,255,136,0.04); pointer-events:none; white-space:nowrap; }
+.hero-label { font-size:0.6rem; color:var(--green); letter-spacing:0.3em; text-transform:uppercase; margin-bottom:0.8rem; }
+.hero h1 { font-family:'Press Start 2P',monospace; font-size:clamp(0.85rem,3.5vw,1.6rem); line-height:1.7; margin-bottom:0.8rem; }
+.hero h1 em { font-style:normal; color:var(--green); text-shadow:0 0 15px rgba(0,255,136,0.4); }
+.hero p { font-family:'Noto Sans JP',sans-serif; color:var(--muted); font-size:0.82rem; line-height:1.8; max-width:520px; }
+.lesson-item { display:flex; align-items:stretch; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
+.lesson-item:hover { background:#161616; }
+.lesson-item:hover .lesson-num { color:var(--green); }
+.lesson-num { font-family:'Press Start 2P',monospace; font-size:0.72rem; color:var(--border); padding:1.2rem 0.8rem; min-width:58px; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--border); transition:color 0.15s; }
+.lesson-body { padding:1.1rem 1.1rem; flex:1; }
+.ltag { display:inline-block; font-size:0.55rem; letter-spacing:0.12em; padding:0.12rem 0.35rem; border-radius:2px; margin-bottom:0.35rem; text-transform:uppercase; }
+.t-structure{background:#0a1f0a;color:#00ff88;border:1px solid #00ff8840;}
+.t-role{background:#1f0a0a;color:#ff3366;border:1px solid #ff336640;}
+.t-constraint{background:#0a0a1f;color:#00cfff;border:1px solid #00cfff40;}
+.t-output{background:#1f1a0a;color:#ffe600;border:1px solid #ffe60040;}
+.t-chain{background:#0f0a1f;color:#cc88ff;border:1px solid #cc88ff40;}
+.lesson-title { font-size:0.88rem; font-weight:700; font-family:'Noto Sans JP',sans-serif; margin-bottom:0.2rem; }
+.lesson-desc { font-size:0.73rem; color:var(--muted); font-family:'Noto Sans JP',sans-serif; line-height:1.5; }
+.lesson-arrow { display:flex; align-items:center; padding:0 0.8rem; color:var(--border); font-size:1rem; transition:color 0.15s; }
+.lesson-item:hover .lesson-arrow { color:var(--green); }
+#detail-view { display:none; padding:1.5rem; max-width:780px; margin:0 auto; animation:fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
+.back-btn { background:none; border:1px solid var(--border); color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.68rem; padding:0.4rem 0.8rem; cursor:pointer; margin-bottom:1.5rem; letter-spacing:0.1em; transition:all 0.15s; }
+.back-btn:hover { color:var(--green); border-color:var(--green); }
+.detail-label { font-size:0.58rem; letter-spacing:0.25em; color:var(--green); text-transform:uppercase; margin-bottom:0.4rem; }
+.detail-title { font-family:'Press Start 2P',monospace; font-size:clamp(0.8rem,2.8vw,1.2rem); line-height:1.7; margin-bottom:1.2rem; }
+.principle { background:#0a1a0a; border-left:3px solid var(--green); padding:0.9rem 1.1rem; margin-bottom:1.3rem; font-family:'Noto Sans JP',sans-serif; font-size:0.85rem; line-height:1.8; color:#aaa; }
+.principle strong { color:var(--green); }
+.sec-label { font-size:0.6rem; letter-spacing:0.2em; color:var(--red); text-transform:uppercase; margin-bottom:0.5rem; }
+.compare { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; margin-bottom:1.3rem; }
+@media(max-width:560px){.compare{grid-template-columns:1fr;}}
+.cmp-box { border-radius:3px; overflow:hidden; }
+.cmp-label { font-size:0.58rem; letter-spacing:0.12em; padding:0.3rem 0.7rem; text-transform:uppercase; }
+.cmp-bad .cmp-label{background:#2a0a0a;color:#ff3366;}
+.cmp-good .cmp-label{background:#0a2a0a;color:#00ff88;}
+.cmp-content { padding:0.9rem; font-family:'JetBrains Mono',monospace; font-size:0.75rem; line-height:1.7; white-space:pre-wrap; word-break:break-all; }
+.cmp-bad .cmp-content{background:#150808;color:#c08080;}
+.cmp-good .cmp-content{background:#081508;color:#80c080;}
+.tip-list{list-style:none;margin-bottom:1.3rem;}
+.tip-list li{display:flex;gap:0.6rem;padding:0.65rem 0;border-bottom:1px solid #141414;font-size:0.8rem;font-family:'Noto Sans JP',sans-serif;line-height:1.6;color:#aaa;}
+.tip-list li::before{content:'▸';color:var(--yellow);flex-shrink:0;margin-top:0.1rem;}
+.template-wrap{background:#080f08;border:1px solid #1a3a1a;border-radius:3px;margin-bottom:1.3rem;overflow:hidden;}
+.template-header{display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.9rem;background:#0d1a0d;border-bottom:1px solid #1a3a1a;}
+.template-header span{font-size:0.58rem;color:var(--green);letter-spacing:0.12em;text-transform:uppercase;}
+.copy-btn{background:none;border:1px solid #1a4a1a;color:#4a9a4a;font-family:'JetBrains Mono',monospace;font-size:0.58rem;padding:0.2rem 0.5rem;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s;}
+.copy-btn:hover{border-color:var(--green);color:var(--green);}
+.copy-btn.ok{color:var(--yellow);border-color:var(--yellow);}
+.template-wrap pre{padding:0.9rem;font-family:'JetBrains Mono',monospace;font-size:0.74rem;line-height:1.8;color:#70c070;white-space:pre-wrap;word-break:break-all;}
+/* CHEATSHEET */
+.cheat-page{padding:1.5rem;}
+.cheat-page h2{font-family:'Press Start 2P',monospace;font-size:clamp(0.75rem,2.5vw,1rem);color:var(--green);margin-bottom:0.4rem;line-height:1.6;}
+.cheat-page>p{color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:0.8rem;margin-bottom:1.8rem;}
+.cheat-sec{margin-bottom:2rem;}
+.cheat-sec h3{font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--yellow);border-bottom:1px solid var(--border);padding-bottom:0.4rem;margin-bottom:0.7rem;}
+.cheat-row{display:grid;grid-template-columns:130px 1fr;gap:0.7rem;padding:0.65rem 0;border-bottom:1px solid #141414;font-size:0.78rem;align-items:start;}
+@media(max-width:480px){.cheat-row{grid-template-columns:1fr;gap:0.15rem;}}
+.cheat-key{color:var(--red);font-size:0.7rem;}
+.cheat-val{color:#999;font-family:'Noto Sans JP',sans-serif;line-height:1.6;font-size:0.78rem;}
+.cheat-val code{font-family:'JetBrains Mono',monospace;background:#1a1a1a;padding:0.1rem 0.3rem;border-radius:2px;font-size:0.7rem;color:#70c070;}
+/* QUIZ */
+.quiz-page{padding:1.5rem;max-width:700px;margin:0 auto;}
+.quiz-page h2{font-family:'Press Start 2P',monospace;font-size:clamp(0.75rem,2.5vw,1rem);color:var(--yellow);margin-bottom:0.4rem;line-height:1.6;}
+.quiz-page>p{color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:0.8rem;margin-bottom:1.8rem;}
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1.3rem;margin-bottom:1rem;display:none;animation:fadeIn 0.2s ease;}
+.quiz-card.active{display:block;}
+.quiz-meta{font-size:0.6rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.7rem;}
+.quiz-meta span{color:var(--yellow);}
+.quiz-q{font-family:'Noto Sans JP',sans-serif;font-size:0.92rem;font-weight:700;line-height:1.6;margin-bottom:1.1rem;}
+.quiz-options{list-style:none;display:flex;flex-direction:column;gap:0.45rem;}
+.quiz-opt{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:3px;padding:0.75rem 0.9rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:0.83rem;color:#aaa;transition:all 0.12s;text-align:left;width:100%;}
+.quiz-opt:hover:not(:disabled){border-color:var(--green);color:var(--white);}
+.quiz-opt.correct{background:#0a2a0a;border-color:var(--green);color:var(--green);}
+.quiz-opt.wrong{background:#2a0a0a;border-color:var(--red);color:var(--red);}
+.quiz-feedback{margin-top:0.9rem;padding:0.75rem;border-radius:3px;font-family:'Noto Sans JP',sans-serif;font-size:0.8rem;line-height:1.6;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:#0a1f0a;color:#70c070;border-left:3px solid var(--green);}
+.quiz-feedback.ng{background:#1f0a0a;color:#c07070;border-left:3px solid var(--red);}
+.quiz-next{margin-top:0.9rem;background:var(--green);border:none;color:#000;font-family:'JetBrains Mono',monospace;font-size:0.7rem;padding:0.55rem 1.1rem;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;display:none;transition:opacity 0.15s;}
+.quiz-next:hover{opacity:0.85;}
+.quiz-next.show{display:inline-block;}
+.quiz-score{text-align:center;padding:3rem 1rem;display:none;}
+.quiz-score.show{display:block;animation:fadeIn 0.3s ease;}
+.score-num{font-family:'Press Start 2P',monospace;font-size:clamp(2rem,10vw,3.5rem);color:var(--green);text-shadow:0 0 20px rgba(0,255,136,0.5);margin-bottom:1rem;}
+.score-msg{font-family:'Noto Sans JP',sans-serif;color:var(--muted);font-size:0.85rem;margin-bottom:1.8rem;}
+.retry-btn{background:none;border:1px solid var(--green);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:0.7rem;padding:0.55rem 1.3rem;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.15s;}
+.retry-btn:hover{background:var(--green);color:#000;}
+/* TEMPLATES */
+.tmpl-page{padding:1.5rem;}
+.tmpl-page h2{font-family:'Press Start 2P',monospace;font-size:clamp(0.7rem,2.2vw,0.95rem);color:var(--blue);margin-bottom:0.4rem;line-height:1.6;}
+.tmpl-page>p{color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:0.8rem;margin-bottom:1.5rem;}
+.tmpl-item{margin-bottom:1rem;border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+.tmpl-header{display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:#141414;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+.tmpl-header:hover{background:#1a1a1a;}
+.tmpl-header-left{display:flex;align-items:center;gap:0.8rem;}
+.tmpl-num{font-family:'Press Start 2P',monospace;font-size:0.58rem;color:var(--muted);}
+.tmpl-name{font-family:'Noto Sans JP',sans-serif;font-size:0.83rem;font-weight:700;}
+.tmpl-chevron{color:var(--muted);font-size:0.8rem;transition:transform 0.2s;}
+.tmpl-item.open .tmpl-chevron{transform:rotate(90deg);color:var(--green);}
+.tmpl-body{display:none;}
+.tmpl-item.open .tmpl-body{display:block;}
+.tmpl-desc{padding:0.75rem 1rem;font-family:'Noto Sans JP',sans-serif;font-size:0.78rem;color:var(--muted);border-bottom:1px solid var(--border);line-height:1.6;}
+.tmpl-code{padding:1rem;font-family:'JetBrains Mono',monospace;font-size:0.74rem;line-height:1.8;color:#70c070;white-space:pre-wrap;word-break:break-all;background:#080f08;}
+.tmpl-actions{padding:0.55rem 1rem;display:flex;gap:0.5rem;border-top:1px solid var(--border);background:#0d0d0d;}
+.tmpl-copy-btn{background:none;border:1px solid #2a4a2a;color:#4a9a4a;font-family:'JetBrains Mono',monospace;font-size:0.6rem;padding:0.25rem 0.65rem;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s;}
+.tmpl-copy-btn:hover{border-color:var(--green);color:var(--green);}
+.tmpl-copy-btn.ok{color:var(--yellow);border-color:var(--yellow);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">PROMPT<span>DOJO</span><span class="blink"></span></div>
+  <div class="status-bar"><div>STATUS: <span>ONLINE</span></div><div>VER: <span>1.0</span></div></div>
+</header>
+<nav>
+  <button class="nav-btn active" onclick="showPage('lessons',this)">レッスン</button>
+  <button class="nav-btn" onclick="showPage('cheatsheet',this)">チートシート</button>
+  <button class="nav-btn" onclick="showPage('quiz',this)">クイズ</button>
+  <button class="nav-btn" onclick="showPage('templates',this)">プロンプト集</button>
+</nav>
+<main>
+
+<div id="page-lessons" class="page active">
+  <div id="lesson-list-view">
+    <div class="hero">
+      <div class="hero-label">// TRAINING MODE ACTIVATED</div>
+      <h1>GIGOを<em>超えろ。</em><br>プロンプトを<em>武器</em>にしろ。</h1>
+      <p>ダメなプロンプトからはダメなものしか生まれない。構造・役割・制約・出力形式を体に叩き込んで、AIから最大の出力を引き出せ。</p>
+    </div>
+    <div id="lesson-list"></div>
+  </div>
+  <div id="detail-view"></div>
+</div>
+
+<div id="page-cheatsheet" class="page">
+  <div class="cheat-page">
+    <h2>CHEAT SHEET</h2>
+    <p>プロンプト設計の鉄則を凝縮。いつでも見返せる一覧。</p>
+    <div class="cheat-sec">
+      <h3>// 基本構造</h3>
+      <div class="cheat-row"><div class="cheat-key">ROLE</div><div class="cheat-val">「〜として振る舞ってください」でAIに専門家を演じさせる</div></div>
+      <div class="cheat-row"><div class="cheat-key">TASK</div><div class="cheat-val">動詞から始める。<code>書いて</code>より<code>〜を〜向けに書いて</code></div></div>
+      <div class="cheat-row"><div class="cheat-key">CONTEXT</div><div class="cheat-val">背景・目的・対象読者を添える</div></div>
+      <div class="cheat-row"><div class="cheat-key">FORMAT</div><div class="cheat-val">出力形式を明示。<code>箇条書き</code> <code>表形式</code> <code>JSON</code></div></div>
+      <div class="cheat-row"><div class="cheat-key">CONSTRAINT</div><div class="cheat-val">文字数・禁止事項・トーンを数値で指定</div></div>
+    </div>
+    <div class="cheat-sec">
+      <h3>// 精度を上げるテクニック</h3>
+      <div class="cheat-row"><div class="cheat-key">Few-shot</div><div class="cheat-val">「例：〜」を添えて出力パターンを学習させる</div></div>
+      <div class="cheat-row"><div class="cheat-key">CoT</div><div class="cheat-val"><code>ステップバイステップで考えてください</code>で思考を展開</div></div>
+      <div class="cheat-row"><div class="cheat-key">Self-check</div><div class="cheat-val"><code>出力後に改善点を3つ挙げてください</code>で自己レビュー</div></div>
+      <div class="cheat-row"><div class="cheat-key">Negative</div><div class="cheat-val"><code>〜は使わないで</code>の否定制約で余計な出力を排除</div></div>
+      <div class="cheat-row"><div class="cheat-key">Persona</div><div class="cheat-val">ターゲット読者を具体的に設定。<code>28歳・エンジニア・副業初心者</code></div></div>
+    </div>
+    <div class="cheat-sec">
+      <h3>// GIGO対策チェックリスト</h3>
+      <div class="cheat-row"><div class="cheat-key">✓ 役割</div><div class="cheat-val">AIに「誰として」答えさせるか決まっているか？</div></div>
+      <div class="cheat-row"><div class="cheat-key">✓ 目的</div><div class="cheat-val">「何のために」が明確か？</div></div>
+      <div class="cheat-row"><div class="cheat-key">✓ 対象</div><div class="cheat-val">「誰向けに」が入っているか？</div></div>
+      <div class="cheat-row"><div class="cheat-key">✓ 形式</div><div class="cheat-val">出力フォーマットを指定しているか？</div></div>
+      <div class="cheat-row"><div class="cheat-key">✓ 制約</div><div class="cheat-val">文字数・禁止語・トーンを数値化しているか？</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-quiz" class="page">
+  <div class="quiz-page">
+    <h2>QUIZ MODE</h2>
+    <p>プロンプトの知識をテスト。全5問。</p>
+    <div id="quiz-cards"></div>
+    <div class="quiz-score" id="quiz-score">
+      <div class="score-num" id="score-num">0/5</div>
+      <div class="score-msg" id="score-msg"></div>
+      <button class="retry-btn" onclick="initQuiz()">RETRY</button>
+    </div>
+  </div>
+</div>
+
+<div id="page-templates" class="page">
+  <div class="tmpl-page">
+    <h2>PROMPT TEMPLATES</h2>
+    <p>ウェブサイト制作に使える9種のプロンプト。[角括弧]を自分のプロジェクトに置き換えて使う。順番通りに実行し、前の出力を次に渡す。</p>
+    <div id="tmpl-list"></div>
+  </div>
+</div>
+
+</main>
+<script>
+const lessons = [
+  { num:'01', tag:'t-structure', tagLabel:'STRUCTURE', title:'プロンプトの基本構造', desc:'「何者に・何を・どう」の3要素を揃えるだけで精度が激変する', principle:'プロンプトは<strong>ROLE × TASK × FORMAT</strong>の3層で構成される。この3つが揃うだけで出力精度は劇的に向上する。曖昧な入力は曖昧な出力しか生まない――それがGIGOの本質。', bad:'記事を書いて', good:'SEOライターとして振る舞ってください。\n副業初心者向けに「クラウドソーシングの始め方」を\n500文字・箇条書き形式で書いてください。', tips:['ROLEは職業・専門家・キャラクターなど何でもOK','TASKは動詞から始め、対象・目的を含める','FORMATは文字数・構造・出力形式を数値で指定する','3つ全部入れると「ちょうど自分が欲しかったもの」が出てくる確率が上がる'], template:'[ROLE]として振る舞ってください。\n[TARGET]向けに[TOPIC]について書いてください。\n\n条件:\n・文字数: [N]文字以内\n・形式: [FORMAT]\n・トーン: [TONE]' },
+  { num:'02', tag:'t-role', tagLabel:'ROLE', title:'ロール指定で質を上げる', desc:'AIに「専門家」を演じさせると出力クオリティが別次元になる', principle:'ロール指定はプロンプトの<strong>最強の武器</strong>。「Appleのデザインディレクター」「Ogilvyのコピーライター」のように具体的な肩書きを与えるほど、AIはその専門家らしい回答をする。', bad:'ウェブサイトのデザインについてアドバイスして', good:'Appleのデザインディレクターとして振る舞ってください。\nSaaS向けランディングページのデザインシステムを\n提案してください。カラー・タイポ・コンポーネントを含めて。', tips:['企業名＋役職の組み合わせが最も効果的','「〜の第一人者として」「〜の専門家として」でも機能する','ロールに合った語彙・視点・優先事項でAIが回答してくれる','架空のキャラクターやペルソナでも有効'], template:'[会社名]の[役職]として振る舞ってください。\n[タスク内容]を作成してください。\n\n重視する観点:\n・[観点1]\n・[観点2]\n・[観点3]' },
+  { num:'03', tag:'t-constraint', tagLabel:'CONSTRAINT', title:'制約で出力を絞り込む', desc:'「〜しないで」「〜文字以内」の否定と数値制約が出力を劇的に改善する', principle:'AIは<strong>制約がないと広く浅く答える</strong>。「専門用語を使わないで」「500文字以内で」のように制約を重ねるほど、欲しい出力に近づく。', bad:'マーケティングについて教えて', good:'マーケティング初心者向けに\nコンバージョン率改善の方法を教えてください。\n\n制約:\n・専門用語は使わない\n・具体例を3つ含める\n・300文字以内\n・数字を使って説明する', tips:['否定制約（〜しないで）で余計なものを排除','数値制約（〜文字以内）で長さをコントロール','パターン制約（〜の形式で）で構造を固定','制約は3〜5個が最も効果的。多すぎると崩れる'], template:'[タスク]をしてください。\n\n以下の制約を守ってください:\n・[禁止事項]: 使用しない\n・文字数: [N]文字以内\n・必須要素: [要素を列挙]\n・トーン: [PROFESSIONAL/CASUAL/TECHNICAL]\n・対象読者: [ターゲット]' },
+  { num:'04', tag:'t-output', tagLabel:'OUTPUT FORMAT', title:'出力形式を設計する', desc:'形式を明示するだけで「使える出力」と「使えない出力」が分かれる', principle:'プロンプトに<strong>出力形式を設計</strong>することで、そのままコピペで使える成果物が生まれる。JSON・Markdown・表・箇条書き・コードブロックなど、用途に合わせて指定する。', bad:'競合他社との比較をしてください', good:'以下の形式でMarkdown表を作成してください:\n\n| 比較項目 | 自社 | 競合A | 競合B |\n| --- | --- | --- | --- |\n\n比較項目: 価格・機能・サポート・スケーラビリティ', tips:['表形式は比較・分析に最強','JSONで出力させるとプログラムに直接使える','Markdownで構造を指定すると見出し・箇条書きが整う','テンプレートを貼り付けて「このフォーマットで埋めて」が最も確実'], template:'以下のフォーマットで出力してください:\n\n## [セクション名]\n- [要素1]: [内容]\n- [要素2]: [内容]\n\n## まとめ\n[N]文字以内で要約' },
+  { num:'05', tag:'t-chain', tagLabel:'CHAIN', title:'チェーンプロンプトで複雑な作業を分解する', desc:'1発で全部やらせようとするな。ステップに分割して精度を上げろ', principle:'複雑なタスクを<strong>ステップに分解</strong>して、前の出力を次の入力に使う「チェーン」が高精度出力の秘訣。一度に全部やらせると質が落ちる。', bad:'完全なウェブサイトを作ってください', good:'Step1: サイトマップと構成を設計してください\n（出力を確認）\n\nStep2: さっきの構成で、ヒーローセクションの\nコピーを書いてください\n（出力を確認）\n\nStep3: Step1とStep2を統合して\nHTMLコードにしてください', tips:['大きなタスクは必ず3〜5ステップに分解する','各ステップの出力を確認してから次に進む','「前のステップの出力を使って」と明示する','ステップごとに専門的なロールを変えても効果的'], template:'Step1: [最初のタスク]\n→ 出力を確認\n\nStep2: Step1の結果を踏まえて、[次のタスク]\n→ 出力を確認\n\nStep3: Step1とStep2を統合して、[最終タスク]' }
+];
+
+const quizData = [
+  { q:'次のうち、最もGIGOを回避できるプロンプトはどれ？', opts:['記事を書いて','SEOライターとして、副業初心者向けに500文字の記事を書いて','何か面白いことを教えて','文章を作って'], ans:1, feedback:'ロール＋ターゲット＋文字数の3要素が揃っている。これがGIGO対策の基本。' },
+  { q:'「Appleのデザインディレクターとして振る舞ってください」は何の技法？', opts:['チェーンプロンプト','制約指定','ロール指定','出力形式指定'], ans:2, feedback:'ロール指定。具体的な企業名＋役職を与えることでAIがその専門家らしい回答をする。' },
+  { q:'複雑なサイト制作を依頼するとき、最も精度が高い方法は？', opts:['一度に全部作ってと伝える','ステップに分解してチェーンする','できるだけ短いプロンプトにする','ロールを指定しない'], ans:1, feedback:'チェーンプロンプト。設計→コピー→コードと分解することで各ステップの精度が上がる。' },
+  { q:'制約として最も効果的なのはどれ？', opts:['なるべく短く','300文字以内・専門用語なし・具体例3つ含める','良い感じに','分かりやすく'], ans:1, feedback:'数値と否定と必須要素の組み合わせ。曖昧な言葉より数値化された制約の方が効果的。' },
+  { q:'GIGO（ガベージインガベージアウト）の意味は？', opts:['良い入力からは良い出力が生まれる','AIは自律的に判断できる','ダメなプロンプトからはダメなものしか生まれない','プロンプトは長い方がいい'], ans:2, feedback:'GIGO = Garbage In, Garbage Out。入力の質が出力の質を決める。プロンプトエンジニアリングの根本原則。' }
+];
+
+const templates = [
+  { num:'01', name:'サイト設計・ページ構成', desc:'Vercelのプリンシパルアーキテクト役。サイトマップ・ユーザーフロー・コンポーネント一覧を設計する。', code:'Vercelのプリンシパルアーキテクトとして振る舞ってください。[WEBSITE TYPE]を構築してください。\n\n以下を含めてください。\n・サイトマップ（ページ階層）\n・ユーザーフロー（3パターン）\n・コンポーネントインベントリ（30以上）\n・技術スタックの推奨・SEO構造\n\nターゲット: [AUDIENCE]　機能: [LIST 3-5]' },
+  { num:'02', name:'デザインシステム全体', desc:'Appleのデザインディレクター役。カラー・タイポ・コンポーネント仕様を設計する。', code:'Appleのデザインディレクターとして振る舞ってください。[BRAND]のデザインシステムを作成してください。\n\n以下を含めてください。\n・カラーパレット（ダークモード含む）\n・タイポグラフィスケール（9段階）\n・コンポーネント仕様（30種類・全状態）\n・WCAG AA準拠の要件\n\n属性: [MINIMAL/BOLD/LUXURY/PLAYFUL]' },
+  { num:'03', name:'全ページのコピーライティング', desc:'Ogilvyのコンバージョンコピーライター役。ヒーロー・特徴・FAQを一括作成する。', code:'Ogilvyのコンバージョンコピーライターとして振る舞ってください。[WEBSITE TYPE]の全ページコピーを書いてください。\n\n以下を含めてください。\n・ヒーロー（見出し・サブヘッド・CTA）\n・特徴セクション（3ブロック）\n・社会的証明（お客様の声＋数字）\n・FAQ（8つ）\n\n口調: [PROFESSIONAL/CASUAL/BOLD]　目標: [CONVERSION/AWARENESS/RETENTION]' },
+  { num:'04', name:'コンポーネントのロジック', desc:'フロントエンドアーキテクト役。フォーム・検索・ダッシュボードの状態管理を設計する。', code:'フロントエンドアーキテクトとして振る舞ってください。以下のコンポーネントのロジックを設計してください。\n\n以下を含めてください。\n・マルチステップフォーム（バリデーション・状態管理）\n・動的価格計算機（リアルタイム）\n・フィルター付き検索（ファセット・ソート）\n・ユーザーダッシュボード（CRUD）\n\n各コンポーネントのステートマシンとエラー処理も含めてください。' },
+  { num:'05', name:'Figma Make専用プロンプト化', desc:'Figma Makeプロンプトエンジニア役。技術仕様をFigma Make用の5プロンプトに変換する。', code:'Figma Make専門のAIプロンプトエンジニアとして振る舞ってください。以下の技術仕様を5つのFigma Makeプロンプトに変換してください。\n\n以下を含めてください。\n・成果から始まるプロンプト形式\n・ブランドコンテキスト（色・タイポ・ムード）\n・インタラクション指定（ホバー・クリック・スクロール）\n・レスポンシブ挙動（モバイル/タブレット/デスクトップ）\n\n[PASTE SPEC FROM CLAUDE]' },
+  { num:'06', name:'アニメーション・インタラクション', desc:'Appleのモーションデザイナー役。ページロード・スクロール・ホバーの動きを設計する。', code:'Appleのモーションデザイナーとして振る舞ってください。[WEBSITE SECTION]のインタラクションをデザインしてください。\n\n以下を含めてください。\n・ページロードシーケンス（段階表示・イージング）\n・スクロール挙動（パララックス・出現アニメ）\n・ホバー時のマイクロインタラクション\n・ページトランジション・モーダル動作\n\nFigma Makeが解釈できる言葉で記述してください。' },
+  { num:'07', name:'レスポンシブ対応の設計', desc:'レスポンシブデザインスペシャリスト役。3ブレークポイントのレイアウト変形を設計する。', code:'レスポンシブデザインのスペシャリストとして振る舞ってください。[WEBSITE]のブレークポイント設計をしてください。\n\n以下を含めてください。\n・モバイル375px/タブレット768px/デスクトップ1440pxの仕様\n・レイアウト変形（グリッド→スタック）\n・ナビゲーションの適応（ハンバーガー・サイドバー）\n・コンテンツの優先順位付け' },
+  { num:'08', name:'データ統合の設計', desc:'フルスタックアーキテクト役。データモデル・API・認証・Supabase統合を設計する。', code:'フルスタックアーキテクトとして振る舞ってください。[WEBSITE TYPE]のデータ統合を設計してください。\n\n以下を含めてください。\n・データモデル（スキーマ定義）\n・APIエンドポイント一覧（GET/POST/PUT/DELETE）\n・認証戦略（JWT・OAuth・APIキー）\n・キャッシュ戦略（CDN・ローカルストレージ）\n\nSupabaseとの統合スキーマも含めてください。' },
+  { num:'09', name:'QA・最適化チェック', desc:'Google QAエンジニア役。Core Web Vitals・WCAG・SEO・セキュリティを一括レビューする。', code:'GoogleのQAエンジニアとして振る舞ってください。以下のウェブサイト仕様をレビューしてください。\n\n以下を含めてください。\n・Core Web Vitals目標値\n・WCAG 2.2 AA準拠チェック\n・SEO（メタタグ・構造化データ）\n・セキュリティ（HTTPS・CSP・入力サニタイズ）\n\n[FIGMAの書き出しを貼り付け]' }
+];
+
+function renderLessons() {
+  document.getElementById('lesson-list').innerHTML = lessons.map((l,i) => `
+    <div class="lesson-item" onclick="showLesson(${i})">
+      <div class="lesson-num">${l.num}</div>
+      <div class="lesson-body">
+        <div class="ltag ${l.tag}">${l.tagLabel}</div>
+        <div class="lesson-title">${l.title}</div>
+        <div class="lesson-desc">${l.desc}</div>
+      </div>
+      <div class="lesson-arrow">›</div>
+    </div>`).join('');
+}
+
+function showLesson(i) {
+  const l = lessons[i];
+  const dv = document.getElementById('detail-view');
+  document.getElementById('lesson-list-view').style.display = 'none';
+  dv.style.display = 'block';
+  const tpl = l.template.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  dv.innerHTML = `
+    <button class="back-btn" onclick="backToList()">← BACK</button>
+    <div class="detail-label">LESSON ${l.num} // ${l.tagLabel}</div>
+    <div class="detail-title">${l.title}</div>
+    <div class="principle">${l.principle}</div>
+    <div class="sec-label">// BAD vs GOOD</div>
+    <div class="compare">
+      <div class="cmp-box cmp-bad"><div class="cmp-label">✗ BAD</div><div class="cmp-content">${l.bad}</div></div>
+      <div class="cmp-box cmp-good"><div class="cmp-label">✓ GOOD</div><div class="cmp-content">${l.good}</div></div>
+    </div>
+    <div class="sec-label">// TIPS</div>
+    <ul class="tip-list">${l.tips.map(t=>`<li>${t}</li>`).join('')}</ul>
+    <div class="sec-label">// TEMPLATE</div>
+    <div class="template-wrap">
+      <div class="template-header"><span>prompt-template.txt</span><button class="copy-btn" id="copybtn-${i}" onclick="copyTpl(${i})">COPY</button></div>
+      <pre>${tpl}</pre>
+    </div>`;
+}
+
+function backToList() {
+  document.getElementById('lesson-list-view').style.display = 'block';
+  document.getElementById('detail-view').style.display = 'none';
+}
+
+function copyTpl(i) {
+  navigator.clipboard.writeText(lessons[i].template).then(() => {
+    const b = document.getElementById('copybtn-'+i);
+    b.textContent='COPIED!'; b.classList.add('ok');
+    setTimeout(()=>{b.textContent='COPY';b.classList.remove('ok');},2000);
+  });
+}
+
+let quizState = {current:0,score:0};
+
+function initQuiz() {
+  quizState = {current:0,score:0};
+  document.getElementById('quiz-score').classList.remove('show');
+  document.getElementById('quiz-cards').style.display = 'block';
+  document.getElementById('quiz-cards').innerHTML = quizData.map((q,i)=>`
+    <div class="quiz-card ${i===0?'active':''}" id="quiz-${i}">
+      <div class="quiz-meta">QUESTION <span>${i+1} / ${quizData.length}</span></div>
+      <div class="quiz-q">${q.q}</div>
+      <ul class="quiz-options">${q.opts.map((o,j)=>`<button class="quiz-opt" onclick="answerQuiz(${i},${j})">${o}</button>`).join('')}</ul>
+      <div class="quiz-feedback" id="fb-${i}"></div>
+      <button class="quiz-next ${i===0?'':'show'}" id="next-${i}" onclick="nextQuiz(${i})" style="display:none">${i<quizData.length-1?'NEXT →':'RESULT'}</button>
+    </div>`).join('');
+}
+
+function answerQuiz(qi,oi) {
+  const q = quizData[qi];
+  const card = document.getElementById('quiz-'+qi);
+  card.querySelectorAll('.quiz-opt').forEach(o=>o.disabled=true);
+  card.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
+  if(oi!==q.ans) card.querySelectorAll('.quiz-opt')[oi].classList.add('wrong');
+  else quizState.score++;
+  const fb = document.getElementById('fb-'+qi);
+  fb.textContent=q.feedback; fb.className=`quiz-feedback show ${oi===q.ans?'ok':'ng'}`;
+  const nx = document.getElementById('next-'+qi);
+  nx.style.display='inline-block';
+}
+
+function nextQuiz(qi) {
+  document.getElementById('quiz-'+qi).classList.remove('active');
+  if(qi<quizData.length-1) {
+    document.getElementById('quiz-'+(qi+1)).classList.add('active');
+  } else {
+    document.getElementById('quiz-cards').style.display='none';
+    document.getElementById('score-num').textContent=`${quizState.score}/${quizData.length}`;
+    const msgs=['もう一度やってみよう','基礎は掴めてる！','なかなか良い！','かなり理解できてる！','完璧！プロンプト道場マスター！'];
+    document.getElementById('score-msg').textContent=msgs[quizState.score]||msgs[4];
+    document.getElementById('quiz-score').classList.add('show');
+  }
+}
+
+function renderTemplates() {
+  document.getElementById('tmpl-list').innerHTML = templates.map((t,i)=>`
+    <div class="tmpl-item" id="ti-${i}">
+      <div class="tmpl-header" onclick="toggleTmpl(${i})">
+        <div class="tmpl-header-left"><span class="tmpl-num">${t.num}</span><span class="tmpl-name">${t.name}</span></div>
+        <span class="tmpl-chevron">›</span>
+      </div>
+      <div class="tmpl-body">
+        <div class="tmpl-desc">${t.desc}</div>
+        <div class="tmpl-code">${t.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        <div class="tmpl-actions"><button class="tmpl-copy-btn" id="tc-${i}" onclick="copyTmpl(${i})">COPY PROMPT</button></div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleTmpl(i) {
+  document.getElementById('ti-'+i).classList.toggle('open');
+}
+
+function copyTmpl(i) {
+  navigator.clipboard.writeText(templates[i].code).then(()=>{
+    const b=document.getElementById('tc-'+i);
+    b.textContent='COPIED!'; b.classList.add('ok');
+    setTimeout(()=>{b.textContent='COPY PROMPT';b.classList.remove('ok');},2000);
+  });
+}
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='lessons') backToList();
+}
+
+renderLessons();
+initQuiz();
+renderTemplates();
+</script>
+</body>
+</html>
